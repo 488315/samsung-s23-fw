@@ -97,7 +97,7 @@ jobs:
             SM-S9160) imei="355267720345327" ;;
             SM-S916B) imei="356761461234566" ;;
             SM-S918B) imei="354721880318483" ;;
-            SM-X710)  imei="000000000000008" ;; # Wi-Fi, test IMEI pattern is fine
+            SM-X710)  imei="000000000000000" ;; # Wi-Fi only; no real IMEI; all-zeros passes Luhn check
             *) echo "No IMEI mapping for model ${{ matrix.model }}" >&2; exit 2 ;;
           esac
           samfirm -m "${{ matrix.model }}" -r "${{ matrix.region }}" -i "${imei}"
