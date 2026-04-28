@@ -82,25 +82,22 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y --no-install-recommends \
             liblz4-tool zip openssl git ca-certificates
-          # samfirm.js v0.3.0 is a Node script with a shebang; make it executable
-          sudo curl -fL -o /usr/bin/samfirm \
-            https://github.com/DavidArsene/samfirm.js/releases/download/v0.3.0/samfirm.js
-          sudo chmod +x /usr/bin/samfirm
+          # Install the original samfirm (jesec) via npm; it does not require IMEI
+          npm install -g samfirm
+          # Samsung rotated FUS auth keys after v0.2.0; patch the bundle to the current values
+          # (keys sourced from DavidArsene/samfirm.js v0.3.0 which still works server-side)
+          SAMFIRM_DIST="$(npm root -g)/samfirm/dist/index.js"
+          sed -i \
+            -e 's/hqzdurufm2c8mf6bsjezu1qgveouv7c7/vicopx7dqu06emacgpnpy8j8zwhduwlh/g' \
+            -e 's/w13r4cvf4hctaujv/9u7qab84rpc16gvk/g' \
+            "$SAMFIRM_DIST"
 
       - name: Fetch firmware
         if: env.need_update == '1'
         shell: bash
         run: |
           set -euo pipefail
-          case "${{ matrix.model }}" in
-            SM-S911B) imei="352772520002740" ;;
-            SM-S9160) imei="355267720345327" ;;
-            SM-S916B) imei="356761461234566" ;;
-            SM-S918B) imei="354721880318483" ;;
-            SM-X710)  imei="000000000000000" ;; # Wi-Fi only; no real IMEI; all-zeros passes Luhn check
-            *) echo "No IMEI mapping for model ${{ matrix.model }}" >&2; exit 2 ;;
-          esac
-          samfirm -m "${{ matrix.model }}" -r "${{ matrix.region }}" -i "${imei}"
+          samfirm -m "${{ matrix.model }}" -r "${{ matrix.region }}"
 
       - name: Get path of files
         if: env.need_update == '1'
