@@ -84,6 +84,13 @@ jobs:
             liblz4-tool zip openssl git ca-certificates
           # Install the original samfirm (jesec) via npm; it does not require IMEI
           npm install -g samfirm
+          # Samsung rotated FUS auth keys after v0.2.0; patch the bundle to the current values
+          # (keys sourced from DavidArsene/samfirm.js v0.3.0 which still works server-side)
+          SAMFIRM_DIST="$(npm root -g)/samfirm/dist/index.js"
+          sed -i \
+            -e 's/hqzdurufm2c8mf6bsjezu1qgveouv7c7/vicopx7dqu06emacgpnpy8j8zwhduwlh/g' \
+            -e 's/w13r4cvf4hctaujv/9u7qab84rpc16gvk/g' \
+            "$SAMFIRM_DIST"
 
       - name: Fetch firmware
         if: env.need_update == '1'
