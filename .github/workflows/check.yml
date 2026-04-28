@@ -86,6 +86,22 @@ jobs:
           sudo curl -fL -o /usr/bin/samfirm \
             https://github.com/DavidArsene/samfirm.js/releases/download/v0.3.0/samfirm.js
           sudo chmod +x /usr/bin/samfirm
+          # Patch samfirm.js: for Wi-Fi-only models (empty modem version), the FUS BinaryInform
+          # request must send an empty modem slot (PDA/CSC//PDA).  v0.3.0 wrongly substitutes
+          # the PDA version when modem is empty (PDA/CSC/PDA/PDA), which makes the Samsung FUS
+          # server return no FUSBody.Put and crashes the tool.  Replace ${q!==""?q:F} with ${q}.
+          sudo python3 - /usr/bin/samfirm <<'PYEOF'
+import sys
+path = sys.argv[1]
+with open(path) as f:
+    src = f.read()
+old = '${q!==""?q:F}/${F}'
+new = '${q}/${F}'
+assert old in src, f"Pattern not found in {path}; samfirm.js may have changed"
+with open(path, 'w') as f:
+    f.write(src.replace(old, new, 1))
+print(f"Patched {path}: Wi-Fi modem slot fix applied")
+PYEOF
 
       - name: Fetch firmware
         if: env.need_update == '1'
@@ -97,7 +113,9 @@ jobs:
             SM-S9160) imei="355267720345327" ;;
             SM-S916B) imei="356761461234566" ;;
             SM-S918B) imei="354721880318483" ;;
-            SM-X710)  imei="000000000000000" ;; # Wi-Fi only; no real IMEI; all-zeros passes Luhn check
+            # SM-X710 is Wi-Fi only; no real IMEI. All-zeros is Luhn-valid and is accepted by
+            # the FUS server for Wi-Fi models once the version string bug above is patched.
+            SM-X710)  imei="000000000000000" ;;
             *) echo "No IMEI mapping for model ${{ matrix.model }}" >&2; exit 2 ;;
           esac
           samfirm -m "${{ matrix.model }}" -r "${{ matrix.region }}" -i "${imei}"
