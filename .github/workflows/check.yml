@@ -93,16 +93,16 @@ jobs:
         run: |
           set -euo pipefail
           case "${{ matrix.model }}" in
-            SM-S911B) id_flag="-i"; device_id="352772520002740" ;;
-            SM-S9160) id_flag="-i"; device_id="355267720345327" ;;
-            SM-S916B) id_flag="-i"; device_id="356761461234566" ;;
-            SM-S918B) id_flag="-i"; device_id="354721880318483" ;;
-            # SM-X710 is Wi-Fi only; FUS server expects a serial number (-s), not an IMEI (-i).
-            # Passing -i for a Wi-Fi model causes the server to return no FUSBody.Put, crashing samfirm.
-            SM-X710)  id_flag="-s"; device_id="R9YTA0000KR" ;;
-            *) echo "No identifier mapping for model ${{ matrix.model }}" >&2; exit 2 ;;
+            SM-S911B) imei="352772520002740" ;;
+            SM-S9160) imei="355267720345327" ;;
+            SM-S916B) imei="356761461234566" ;;
+            SM-S918B) imei="354721880318483" ;;
+            # SM-X710 is Wi-Fi only and has no real IMEI. samfirm.js requires -i (demandOption),
+            # so we pass all-zeros which is Luhn-valid. The FUS server accepts it for Wi-Fi models.
+            SM-X710)  imei="000000000000000" ;;
+            *) echo "No IMEI mapping for model ${{ matrix.model }}" >&2; exit 2 ;;
           esac
-          samfirm -m "${{ matrix.model }}" -r "${{ matrix.region }}" "${id_flag}" "${device_id}"
+          samfirm -m "${{ matrix.model }}" -r "${{ matrix.region }}" -i "${imei}"
 
       - name: Get path of files
         if: env.need_update == '1'
