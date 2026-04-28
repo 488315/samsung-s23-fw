@@ -97,9 +97,10 @@ jobs:
             SM-S9160) imei="355267720345327" ;;
             SM-S916B) imei="356761461234566" ;;
             SM-S918B) imei="354721880318483" ;;
-            # SM-X710 is Wi-Fi only and has no real IMEI. samfirm.js requires -i (demandOption),
-            # so we pass all-zeros which is Luhn-valid. The FUS server accepts it for Wi-Fi models.
-            SM-X710)  imei="000000000000000" ;;
+            # SM-X710 is Wi-Fi only; it has no IMEI. samfirm.js requires -i but passes the value
+            # verbatim to DEVICE_IMEI_PUSH. For Wi-Fi models the FUS server expects a serial number
+            # in that field, not a numeric IMEI — so pass a valid-format Samsung serial instead.
+            SM-X710)  imei="R9YTA0000KR" ;;
             *) echo "No IMEI mapping for model ${{ matrix.model }}" >&2; exit 2 ;;
           esac
           samfirm -m "${{ matrix.model }}" -r "${{ matrix.region }}" -i "${imei}"
